@@ -1,6 +1,7 @@
 package util;
 
 import model.Car;
+import model.Direction;
 import model.World;
 
 import java.util.ArrayDeque;
@@ -33,7 +34,7 @@ public class MPlan {
                 x = way.peek().x;
                 y = way.peek().y;
             }
-            MDirection d = way.peek().direction;
+            Direction d = way.peek().direction;
             int i = 0;
             for (MTile tile: way){
                 if (d != tile.direction || i == way.size() - 1) {

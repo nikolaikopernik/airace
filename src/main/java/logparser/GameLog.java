@@ -17,7 +17,7 @@ import java.util.Queue;
  * Created by Nikolai_Bogdanov on 1/18/2016.
  */
 public class GameLog {
-    private static final int ARM = 5;
+    private static final int ARM = 6;
     private final Gson gson;
     private final BufferedReader reader;
     private final World start;
@@ -122,8 +122,8 @@ public class GameLog {
 
     public MTile[] getNextWay() {
         MTile[] w = new MTile[ARM-1];
-        for(int i = 0; i<ARM; i++){
-            w[i] = way.get(currentTileIDX+i);
+        for(int i = 0; i<ARM-1; i++){
+            w[i] = way.get((currentTileIDX+i)%way.size());
         }
         return w;
     }

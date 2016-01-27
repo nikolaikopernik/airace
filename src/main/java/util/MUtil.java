@@ -1,6 +1,7 @@
 package util;
 
 import model.Car;
+import model.Direction;
 import model.TileType;
 import model.World;
 
@@ -116,6 +117,21 @@ public class MUtil {
 
     }
 
-
+    public static int direction2int(Direction d){
+        if(d==null){
+            return 0;
+        }
+        switch (d){
+            case UP:
+                return 0;
+            case RIGHT:
+                return 1;
+            case DOWN:
+                return 2;
+            case LEFT:
+                return 3;
+        }
+        return 0;
+    }
 
 }

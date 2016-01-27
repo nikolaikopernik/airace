@@ -1,6 +1,7 @@
 package util;
 
 import model.Car;
+import model.Direction;
 
 import java.util.Arrays;
 
@@ -10,7 +11,7 @@ import java.util.Arrays;
 public class MTile {
     public int x = 0;
     public int y = 0;
-    public MDirection direction = null;
+    public Direction direction = null;
 
     public MTile(int[] pair){
         this.x = pair[0];
@@ -22,7 +23,7 @@ public class MTile {
         this.y = y;
     }
 
-    public MTile(MTile cur, MDirection dir) {
+    public MTile(MTile cur, Direction dir) {
         switch (dir) {
             case UP:
                 this.x = cur.x;
@@ -66,16 +67,15 @@ public class MTile {
 
     /**
      * Все возможные следующие шаги
-     * @param cur
      * @param tar
      * @return
      */
     public MTile[] getDirectionsOrdered(final MTile tar) {
         MTile[] result = new MTile[4];
-        result[0] = new MTile(this, MDirection.UP);
-        result[1] = new MTile(this, MDirection.LEFT);
-        result[2] = new MTile(this, MDirection.RIGHT);
-        result[3] = new MTile(this, MDirection.DOWN);
+        result[0] = new MTile(this, Direction.UP);
+        result[1] = new MTile(this, Direction.LEFT);
+        result[2] = new MTile(this, Direction.RIGHT);
+        result[3] = new MTile(this, Direction.DOWN);
         Arrays.sort(result,
                 (MTile o1, MTile o2) -> o1.distance(tar) - o2.distance(tar));
         return result;
@@ -83,13 +83,13 @@ public class MTile {
 
     public void setDirectionTo(MTile next){
         if(next.x-x>0){
-            this.direction = MDirection.RIGHT;
+            this.direction = Direction.RIGHT;
         }else if(next.x-x<0){
-            this.direction = MDirection.LEFT;
+            this.direction = Direction.LEFT;
         }else if(next.y-y<0){
-            this.direction = MDirection.UP;
+            this.direction = Direction.UP;
         }else if(next.y-y>0){
-            this.direction = MDirection.DOWN;
+            this.direction = Direction.DOWN;
         }
     }
 
