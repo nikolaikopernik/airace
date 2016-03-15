@@ -21,7 +21,10 @@ public class LogDecompiler {
 
 
     public static void analyze(Path path, String outname){
-        try(Writer writer = new BufferedWriter(new FileWriter(outname))) {
+        path.resolve(outname).toFile().delete();
+        try(Writer writer = new BufferedWriter(new FileWriter(path.resolve(outname).toFile()))) {
+            writer.write("TICK,FORWARD1,FORWARD2,FORWARD3,FORWARD4,HEALTH,SPEED,DISTANCE_BORDER,ANGLE_DIRECTION," +
+                    "ANGEL_BONUS,DISTANCE_BONUS,BONUS_TYPE_REPAIR,BONUS_TYPE_AMMO,BONUS_TYPE_NITRO,BONUS_TYPE_OIL,BONUS_TYPE_SCORE,Y_WHEEL,Y_POWER\n");
             for (File f : path.toFile().listFiles()) {
                 if (f.getName().endsWith(".log")) {
                     parseGameLog(f, writer);
@@ -38,7 +41,7 @@ public class LogDecompiler {
         while(((tick = log.nextTick())!=null)){
             String parameters = getParametersFromTick(tick, log);
             if(parameters!=null){
-                System.out.println(parameters);
+                writer.write(tick.getTick()+", "+parameters+'\n');
             }
         }
     }
@@ -58,18 +61,46 @@ public class LogDecompiler {
      */
     private static String getParametersFromTick(World tick, GameLog log) {
         Car me = log.findMyCar(tick);
-        if(tick.getTick()<180){
+        if(tick.getTick()<180 || me.isFinishedTrack() || me.getDurability()==0){
             return null;
         }
-        MTile[] nextway = log.getNextWay();
-        MTile current = nextway[0];
-        int[] wayparams = wayParams(nextway, me);
-        int borderDistance = getBorderDistance(current, me);
-        double directionAngle = getDirectionAngle(current, me);
-        double[] angleDstToBonus = getAngleDistanceTo(me, chooseCloser(me, tick.getBonuses()));
-        return String.format("%d, %d, %d, %d, %.3f, %.3f, %d, %.3f, %.3f, %d, %.3f, %.3f",
-                wayparams[0],wayparams[1],wayparams[2],wayparams[3],
-                me.getDurability(), me.getSpeedX()+me.getSpeedY(), borderDistance, directionAngle, angleDstToBonus[0], (int)angleDstToBonus[1], me.getWheelTurn(), me.getEnginePower());
+        try {
+            if(tick.getTick()>4571){
+                System.out.println(1);
+            }
+            MTile[] nextway = log.getNextWay();
+            MTile current = nextway[0];
+            int[] wayparams = wayParams(nextway, me);
+            int borderDistance = getBorderDistance(current, me);
+            double directionAngle = getDirectionAngle(current, me);
+            Unit closer = chooseCloser(me, tick.getBonuses());
+            double[] angleDstToBonus = getAngleDistanceTo(me, closer);
+            byte[] bonusConverted = convertBonusType((Bonus) closer, log);
+            return String.format("%d, %d, %d, %d," +
+                            " %.3f, %.3f, %d, %.3f, %.3f, %d," +
+                            " %d, %d, %d, %d, %d," +
+                            " %.3f, %.3f",
+                    wayparams[0], wayparams[1], wayparams[2], wayparams[3],
+                    me.getDurability(), me.getSpeedX() + me.getSpeedY(), borderDistance, directionAngle, angleDstToBonus[0], (int) angleDstToBonus[1],
+                    bonusConverted[0], bonusConverted[1], bonusConverted[2], bonusConverted[3], bonusConverted[4],
+                    me.getWheelTurn(), me.getEnginePower());
+        }catch (Exception e){
+            System.out.println("tick is "+tick.getTick());
+            throw e;
+        }
+    }
+
+    private static byte[] convertBonusType(Bonus closer, GameLog log) {
+        byte[] b = new byte[5];
+        if(closer == null){
+            return b;
+        }
+        BonusType t = log.findBonus(closer.getId());
+        if(t==null){
+            return b;
+        }
+        b[t.ordinal()] = 1;
+        return b;
     }
 
     private static double[] getAngleDistanceTo(Car me, Unit unit) {
@@ -144,6 +175,6 @@ public class LogDecompiler {
 
 
     public static void main(String...args){
-        analyze(Paths.get("D:\\LocalRunner\\log\\"), "out.log");
+        analyze(Paths.get("D:\\LocalRunner\\log\\"), "out.csv");
     }
 }

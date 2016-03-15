@@ -1,17 +1,11 @@
 package logparser;
 
 import com.google.gson.Gson;
-import model.Car;
-import model.Game;
-import model.Player;
-import model.World;
+import model.*;
 import util.MTile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * Created by Nikolai_Bogdanov on 1/18/2016.
@@ -23,6 +17,7 @@ public class GameLog {
     private final World start;
     private ArrayList<MTile> way = new ArrayList<>(100);
     private Queue<World> buffer = new LinkedList<>();
+    private Map<Long, BonusType> bonuses = new HashMap<>();
     private int currentTileIDX = 0;
     private long myCarID = 0;
 
@@ -30,9 +25,16 @@ public class GameLog {
         gson = new Gson();
         reader = new BufferedReader(new FileReader(file));
         String line = reader.readLine();
-        start = parseGameInfo(line, gson);
+        start = parseGameInfo(line, gson, file.getName());
         Car my = initMyCar(start);
+        initBonusesMap();
         initTheWay(my);
+    }
+
+    private void initBonusesMap() {
+        for(Bonus b:start.getBonuses()){
+            bonuses.put(b.getId(), b.getType());
+        }
     }
 
     private void initTheWay(Car start) {
@@ -67,7 +69,7 @@ public class GameLog {
                 reader.close();
                 return null;
             }
-            buffer.add(parseGameInfo(line, gson));
+            buffer.add(parseGameInfo(line, gson, "B"));
         }
         World w = buffer.poll();
         checkCurrentTile(w);
@@ -89,7 +91,7 @@ public class GameLog {
                 if(line == null){
                     break way;
                 }
-                World tick = parseGameInfo(line, gson);
+                World tick = parseGameInfo(line, gson, "A");
                 buffer.add(tick);
                 MTile next = new MTile(findMyCar(tick));
                 if(!next.equals(last)){
@@ -112,18 +114,30 @@ public class GameLog {
         return null;
     }
 
+    public BonusType findBonus(Long id){
+        return bonuses.get(id);
+    }
+
     public World getInfo() {
         return start;
     }
 
-    private static World parseGameInfo(String line, Gson gson) {
-        return (World)gson.fromJson(line, World.class);
+    private static World parseGameInfo(String line, Gson gson, String name) {
+        try {
+            return (World) gson.fromJson(line, World.class);
+        }catch (RuntimeException e){
+            System.out.println("Some error in parsing world object in "+name);
+            throw e;
+        }
     }
 
     public MTile[] getNextWay() {
         MTile[] w = new MTile[ARM-1];
         for(int i = 0; i<ARM-1; i++){
             w[i] = way.get((currentTileIDX+i)%way.size());
+        }
+        if(w[0].direction==null){
+            w[0].direction = w[1].direction;
         }
         return w;
     }
