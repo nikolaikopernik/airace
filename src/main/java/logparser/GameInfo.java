@@ -2,7 +2,6 @@ package logparser;
 
 import model.Car;
 import model.World;
-import util.MDirection;
 import util.MTile;
 import util.MUtil;
 

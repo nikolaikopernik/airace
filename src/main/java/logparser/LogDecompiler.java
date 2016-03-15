@@ -5,9 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.sun.xml.internal.ws.util.MetadataUtil;
 import logparser.GameInfo;
-import model.Car;
-import model.Game;
-import model.World;
+import model.*;
 import util.MTile;
 import util.MUtil;
 
@@ -68,13 +66,46 @@ public class LogDecompiler {
         int[] wayparams = wayParams(nextway, me);
         int borderDistance = getBorderDistance(current, me);
         double directionAngle = getDirectionAngle(current, me);
-        return String.format("%d, %d, %d, %d, %.3f, %.3f, %d",
+        double[] angleDstToBonus = getAngleDistanceTo(me, chooseCloser(me, tick.getBonuses()));
+        return String.format("%d, %d, %d, %d, %.3f, %.3f, %d, %.3f, %.3f, %d, %.3f, %.3f",
                 wayparams[0],wayparams[1],wayparams[2],wayparams[3],
-                me.getDurability(), me.getSpeedX()+me.getSpeedY(), borderDistance);
+                me.getDurability(), me.getSpeedX()+me.getSpeedY(), borderDistance, directionAngle, angleDstToBonus[0], (int)angleDstToBonus[1], me.getWheelTurn(), me.getEnginePower());
+    }
+
+    private static double[] getAngleDistanceTo(Car me, Unit unit) {
+        if(unit == null){
+            return new double[]{-1,-1};
+        }
+        return new double[]{me.getAngleTo(unit), me.getDistanceTo(unit)};
+    }
+
+    private static Unit chooseCloser(Car me, Bonus[] bonuses) {
+        double min = 100000;
+        Unit minimal = null;
+        for(Bonus b:bonuses){
+            if(me.getAngleTo(b)<Math.PI/2){
+                double distance = me.getDistanceTo(b);
+                if(distance<min){
+                    minimal = b;
+                    min = distance;
+                }
+            }
+        }
+        return minimal;
     }
 
     private static double getDirectionAngle(MTile current, Car me) {
-        return me.getAngleTo();
+        switch (current.direction){
+            case UP:
+                return me.getAngleTo(me.getX(), me.getY()-10);
+            case DOWN:
+                return me.getAngleTo(me.getX(), me.getY()+10);
+            case LEFT:
+                return me.getAngleTo(me.getX()-10, me.getY());
+            case RIGHT:
+                return me.getAngleTo(me.getX()+10, me.getY());
+        }
+        return 0;
     }
 
     private static int getBorderDistance(MTile current, Car me) {
